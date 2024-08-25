@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Notes App</title>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js"></script>
+    <script>
+        // Ваша конфігурація Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-5CPzp5iwNHUxloFkDBf3J8gRlUpbGVc",
+            authDomain: "ton-not.firebaseapp.com",
+            databaseURL: "https://ton-not-default-rtdb.firebaseio.com",
+            projectId: "ton-not",
+            storageBucket: "ton-not.appspot.com",
+            messagingSenderId: "729333286761",
+            appId: "1:729333286761:web:5a0cc89c71712ff28bdff8",
+            measurementId: "G-XNFCBRN9J8"
+        };
+
+        // Ініціалізація Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let userId = null;
+
+        function initializeApp() {
+            // Витягування Telegram ID через Telegram Web Apps API
+            Telegram.WebApp.ready();
+            const tgUser = Telegram.WebApp.initDataUnsafe.user;
+            if (tgUser) {
+                userId = tgUser.id;
+                document.getElementById('user-id').innerText = `Ваш Telegram ID: ${userId}`;
+                loadUserData();
+            } else {
+                alert("Не вдалося отримати Telegram ID.");
+            }
+        }
+
+        function loadUserData() {
+            if (userId) {
+                const userRef = database.ref('users/' + userId);
+                userRef.once('value').then((snapshot) => {
+                    const userData = snapshot.val();
+                    if (userData) {
+                        document.getElementById('notes').value = userData.notes;
+                    }
+                });
+            }
+        }
+
+        function saveUserData() {
+            if (userId) {
+                const notes = document.getElementById('notes').value;
+                const userRef = database.ref('users/' + userId);
+                userRef.set({
+                    notes: notes
+                }).then(() => {
+                    alert("Ваші нотатки збережено!");
+                }).catch((error) => {
+                    alert("Помилка збереження: " + error.message);
+                });
+            }
+        }
+
+        window.onload = initializeApp;
+    </script>
+</head>
+<body>
+    <h1>Ваші нотатки</h1>
+    <p id="user-id">Ваш Telegram ID: невідомо</p>
+    <textarea id="notes" rows="10" cols="30" placeholder="Введіть свої нотатки тут..."></textarea><br>
+    <button onclick="saveUserData()">Зберегти нотатки</button>
+</body>
+</html>
